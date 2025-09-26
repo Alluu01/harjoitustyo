@@ -16,6 +16,6 @@ import com.example.harjoitustyo.WeatherViewModel
 fun HomeScreen(viewModel: WeatherViewModel) {
     Column(modifier = Modifier.padding(16.dp)) {
         Text(viewModel.selectedCity.value, style = MaterialTheme.typography.headlineMedium)
-        // Add your weather cards or icons here (currently hard-coded)
+        // Add your weather cards or icons here (currently hard-codddded)
     }
 }
