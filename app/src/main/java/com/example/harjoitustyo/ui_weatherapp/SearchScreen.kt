@@ -69,7 +69,7 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
     }
 }
 
-@Composable
+@Composable //todo//
 fun CitySearchBar(
     allCities: List<String>,
     onCitySelected: (String) -> Unit,
