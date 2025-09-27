@@ -1,20 +1,34 @@
+package com.example.harjoitustyo.ui_weatherapp
+
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.harjoitustyo.WeatherViewModel
+import com.example.harjoitustyo.City
 
-
+@RequiresApi(Build.VERSION_CODES.O)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) {
     var query by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(16.dp)) {
-        // Search bar
-        Column {
+
+        val focusRequester = remember { FocusRequester() }
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
             TextField(
                 value = query,
                 onValueChange = {
@@ -22,22 +36,25 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                     expanded = it.isNotEmpty()
                 },
                 label = { Text("City") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor()        // tärkeää: sitoo valikon tähän TextFieldiin
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                singleLine = true
             )
 
-            DropdownMenu(
+            // Näytetään ehdotukset tekstikentän ALAPUOLELLA
+            ExposedDropdownMenu(
                 expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.fillMaxWidth()
+                onDismissRequest = { expanded = false }
             ) {
-                viewModel.cities.filter { it.contains(query, ignoreCase = true) }
+                viewModel._cities.filter { it.name.contains(query, ignoreCase = true) }
                     .forEach { city ->
                         DropdownMenuItem(
-                            text = { Text(city) },
+                            text = { Text(city.name) },
                             onClick = {
-                                query = city
+                                viewModel.selectCity(city)
                                 expanded = false
-                                viewModel.selectedCity.value = city
                                 navController.navigate("home") {
                                     popUpTo("home") { inclusive = true }
                                 }
@@ -47,63 +64,69 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
             }
         }
 
+        LaunchedEffect(key1 = true) {
+            focusRequester.requestFocus()
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
 
-        // List of cities with add/remove buttons
-        viewModel.cities.forEach { city ->
+        // Kaupunkilista ja lisäyslomake (jätän ennalleen)
+        viewModel._cities.forEach { city ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(city)
-                Button(onClick = { viewModel.cities.remove(city) }) {
+                Text(city.name)
+                Button(onClick = { viewModel.removeCity(city) }) {
                     Text("Remove")
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { viewModel.cities.add("NewCity") }) {
-            Text("Add City")
-        }
-    }
-}
 
-@Composable //todo//
-fun CitySearchBar(
-    allCities: List<String>,
-    onCitySelected: (String) -> Unit,
-    selectedCity: String,
-    modifier: Modifier
-) {
-    var query by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
+        var newCityName by remember { mutableStateOf("") }
+        var newLat by remember { mutableStateOf("") }
+        var newLon by remember { mutableStateOf("") }
 
-    Column {
-        TextField(
-            value = query,
-            onValueChange = {
-                query = it
-                expanded = it.isNotEmpty()
-            },
-            label = { Text("Select a city") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        Column {
+            Spacer(Modifier.height(16.dp))
+            Text("Add Custom City")
 
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            allCities.filter { it.contains(query, ignoreCase = true) }.forEach { city ->
-                DropdownMenuItem(
-                    text = { Text(city) },
-                    onClick = {
-                        query = city
-                        expanded = false
-                        onCitySelected(city)
+            TextField(
+                value = newCityName,
+                onValueChange = { newCityName = it },
+                label = { Text("City Name") }
+            )
+            TextField(
+                value = newLat,
+                onValueChange = { newLat = it },
+                label = { Text("Latitude") }
+            )
+            TextField(
+                value = newLon,
+                onValueChange = { newLon = it },
+                label = { Text("Longitude") }
+            )
+
+            Button(onClick = {
+                val lat = newLat.toDoubleOrNull()
+                val lon = newLon.toDoubleOrNull()
+                if (lat != null && lon != null && newCityName.isNotBlank()) {
+                    val newCity = City(newCityName, lat, lon)
+                    viewModel.addCity(newCity)
+                    viewModel.selectCity(newCity)
+                    query = ""
+                    newCityName = ""
+                    newLat = ""
+                    newLon = ""
+                    expanded = false
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
                     }
-                )
+                }
+            }) {
+                Text("Add City")
             }
         }
     }

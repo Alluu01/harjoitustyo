@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.harjoitustyo.ui.theme.displayFontFamily
 
-@RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 @Composable
 fun WelcomeScreen(navController: NavHostController) {
     Column(
@@ -48,14 +47,15 @@ fun WelcomeScreen(navController: NavHostController) {
         Image(
             painter = painterResource(id = R.drawable.weather_mix_24px),
             contentDescription = "Logo",
-            modifier = Modifier.size(250.dp)
+            modifier = Modifier.size(200.dp)
         )
-
+        Spacer(modifier = Modifier.height(56.dp))
         Text("Harjoitustyö", fontSize = 48.sp, style = MaterialTheme.typography.displayLarge)
         Text("Sääasema", fontSize = 32.sp, style = MaterialTheme.typography.displayMedium)
-        Spacer(modifier = Modifier.height(24.dp))
-        IconButton(onClick = { navController.navigate("home") }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Back")
+        Spacer(modifier = Modifier.height(32.dp))
+        IconButton(onClick = { navController.navigate("home") }, modifier = Modifier.size(96.dp) ) {
+            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Get Started", modifier = Modifier.size(96.dp))
+
         }
     }
 }

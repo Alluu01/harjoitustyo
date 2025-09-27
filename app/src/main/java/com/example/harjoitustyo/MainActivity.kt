@@ -1,12 +1,15 @@
 package com.example.harjoitustyo
 
-import SearchScreen
+import com.example.harjoitustyo.ui_weatherapp.SearchScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -14,7 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -66,17 +71,30 @@ fun MainScreen(viewModel: WeatherViewModel) {
 }
 
 
+
 @Composable
 fun BottomNavBar(navController: NavHostController) {
-    val items = listOf("home", "search", "settings")
-    NavigationBar {
-        items.forEach { screen ->
+    val items = listOf(
+        BottomNavItem("home", R.drawable.home_24px, "Home"),
+        BottomNavItem("search", R.drawable.search_24px, "Search"),
+        BottomNavItem("settings", R.drawable.settings_24px, "Settings")
+    )
+
+    NavigationBar(
+        modifier = Modifier.height(96.dp) // shrink height here
+    ) {
+        items.forEach { item ->
             NavigationBarItem(
-                icon = { /* Optional: add icons here */ },
-                label = { Text(screen.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }) },
-                selected = false, // optional: add state to highlight selected
-                onClick = { navController.navigate(screen) }
+                icon = { Icon(painterResource(id = item.iconRes), contentDescription = item.label) },
+                selected = false, // Highlight navbar selection, currently disabled
+                onClick = { navController.navigate(item.route) }
             )
         }
     }
 }
+
+data class BottomNavItem(
+    val route: String,
+    val iconRes: Int,
+    val label: String
+)
