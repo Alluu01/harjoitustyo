@@ -32,7 +32,6 @@ class WeatherViewModel : ViewModel() {
         City("Espoo", 60.2055, 24.6559)
     )
 
-    //
     private val _selectedCity = MutableStateFlow<City>(_cities.first())
     val selectedCity: StateFlow<City> = _selectedCity.asStateFlow()
 

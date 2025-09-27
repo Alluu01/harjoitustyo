@@ -55,8 +55,11 @@ fun WelcomeScreen(navController: NavHostController) {
         Spacer(modifier = Modifier.height(32.dp))
         IconButton(onClick = { navController.navigate("home") }, modifier = Modifier.size(96.dp) ) {
             Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Get Started", modifier = Modifier.size(96.dp))
-
         }
+
+        Spacer(modifier = Modifier.height(256.dp))
+
+        Text("By Aleksi Köppä", fontSize = 24.sp, style = MaterialTheme.typography.displaySmall)
     }
 }
 

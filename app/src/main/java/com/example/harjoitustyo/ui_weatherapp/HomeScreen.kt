@@ -48,7 +48,7 @@ fun HomeScreen(viewModel: WeatherViewModel = viewModel()) {
 
             // Display current temperature if available
             val currentTemp = temps.firstOrNull() ?: 0.0
-            Text("Now: ${currentTemp.toInt()} °C", style = MaterialTheme.typography.displayLarge)
+            Text("${currentTemp.toInt()} °C", style = MaterialTheme.typography.displayLarge)
 
             Spacer(modifier = Modifier.height(72.dp))
 
