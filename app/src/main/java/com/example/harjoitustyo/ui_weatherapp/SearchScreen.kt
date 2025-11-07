@@ -32,9 +32,14 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
         modifier = Modifier
             .fillMaxSize()
             .padding( 8.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
 
     ) {
+
+        Text("My Cities", style = MaterialTheme.typography.displaySmall)
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         Row(
             modifier = Modifier
@@ -111,7 +116,7 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(0.dp))
 
         Card(
             modifier = Modifier
@@ -150,8 +155,6 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                     label = { Text("Longitude", style = MaterialTheme.typography.bodyMedium) }
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
-
                 Button(onClick = {
                     val lat = newLat.toDoubleOrNull()
                     val lon = newLon.toDoubleOrNull()
@@ -176,7 +179,6 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                         contentDescription = "Remove",
                     )
                 }
-                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
