@@ -1,11 +1,8 @@
 package com.example.harjoitustyo
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -13,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.URL
 import java.time.LocalDateTime
@@ -60,14 +58,6 @@ class WeatherViewModel : ViewModel() {
     val currentIcon: StateFlow<Int> = _currentIcon
 
 
-    init {
-        // launch coroutine safely to fetch weather for first city
-        viewModelScope.launch {
-            selectCity(_cities.first())
-        }
-    }
-
-
     fun selectCity(city: City) {
         _selectedCity.value = city
     }
@@ -88,7 +78,7 @@ class WeatherViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             selectedCity.collect { city ->
-                city?.let { fetchWeather(it) }
+                city.let { fetchWeather(it) }
             }
         }
     }
@@ -99,7 +89,7 @@ class WeatherViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val url =
-                    "https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&hourly=temperature_2m,weather_code,rain&timezone=auto&forecast_days=2"
+                    "https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&hourly=temperature_2m,weather_code,rain&timezone=Europe/Helsinki&forecast_days=2"
                 val data = URL(url).readText()
                 val json = JSONObject(data)
                 val hourly = json.getJSONObject("hourly")
@@ -117,25 +107,69 @@ class WeatherViewModel : ViewModel() {
                     timesJson.getString(i).substring(11, 16) // HH:mm
                 }
 
-                // Nykyhetki laitteen kellosta
+                val totalHours = 24
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
                 val now = LocalDateTime.now()
-                val formatter = DateTimeFormatter.ofPattern("HH:mm")
-                val nowHHmm = now.format(formatter)
 
-                // Etsi ensimmäinen tunti joka on >= nyt
-                val startIndex = times.indexOfFirst { it >= nowHHmm }.let {
-                    if (it == -1) 0 else it
+                // Parsitaan ajat LocalDateTime-muotoon
+                val parsedTimes = List(timesJson.length()) { i ->
+                    LocalDateTime.parse(timesJson.getString(i), formatter)
                 }
 
-                val endIndex = (startIndex + 24).coerceAtMost(times.size)
+                // Etsi ensimmäinen aika, joka on nyt tai tulevaisuudessa
+                val startIndex = parsedTimes.indexOfFirst { !it.isBefore(now) }.let {
+                    if (it == 1) 0 else it
+                }
 
-                _temperatures.value = temps.subList(startIndex, endIndex)
-                _weatherCodes.value = codes.subList(startIndex, endIndex)
-                _times.value = times.subList(startIndex, endIndex)
-                _rain.value = rainAmounts.subList(startIndex, endIndex)
+                // Jos dataa ei ole tarpeeksi, täydennetään alusta
+                val availableHours = parsedTimes.size - startIndex
+                val remaining = totalHours - availableHours
+
+                val fullTemps = if (availableHours >= totalHours) {
+                    temps.subList(startIndex, startIndex + totalHours)
+                } else {
+                    temps.subList(startIndex, temps.size) + temps.subList(0, remaining)
+                }
+
+                val fullCodes = if (availableHours >= totalHours) {
+                    codes.subList(startIndex, startIndex + totalHours)
+                } else {
+                    codes.subList(startIndex, codes.size) + codes.subList(0, remaining)
+                }
+
+                val fullRain = if (availableHours >= totalHours) {
+                    rainAmounts.subList(startIndex, startIndex + totalHours)
+                } else {
+                    rainAmounts.subList(startIndex, rainAmounts.size) + rainAmounts.subList(
+                        0, remaining
+                    )
+                }
+
+                val fullTimes = if (availableHours >= totalHours) {
+                    parsedTimes.subList(startIndex, startIndex + totalHours)
+                } else {
+                    parsedTimes.subList(startIndex, parsedTimes.size) + parsedTimes.subList(
+                        0, remaining
+                    )
+                }
+
+
+                // Muunna ajat näyttömuotoon (esim. "HH:mm")
+                val displayTimes = fullTimes.map { it.format(DateTimeFormatter.ofPattern("HH:mm")) }
+
+                // Aseta arvot
+                _temperatures.value = fullTemps
+                _weatherCodes.value = fullCodes
+                _rain.value = fullRain
+                _times.value = displayTimes
 
                 // Käytä nykyisen tunnin iconia
-                _currentIcon.value = getWeatherIcon(_weatherCodes.value.firstOrNull() ?: 0)
+                // Käytä nykyisen tunnin iconia
+                val icon = getWeatherIcon(_weatherCodes.value.firstOrNull() ?: 0)
+                withContext(Dispatchers.Main) {
+                    _currentIcon.value = icon
+                }
+
 
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -143,12 +177,13 @@ class WeatherViewModel : ViewModel() {
         }
     }
 
+
     private fun getWeatherIcon(code: Int): Int {
         return when (code) {
             0, 1 -> R.drawable.sunny
             2 -> R.drawable.partly_cloudy
             3, 4 -> R.drawable.cloudy
-            5, 6, 20, 21 -> R.drawable.rain_light
+            5, 6, 20, 21 -> R.drawable.rain_sunny
             7, 8 -> R.drawable.rain_heavy
             10, 11, 90, 91 -> R.drawable.snow_light
             12, 13, 92, 93 -> R.drawable.snow_heavy
@@ -156,6 +191,7 @@ class WeatherViewModel : ViewModel() {
             in 25..39 -> R.drawable.fog
             in 80..84 -> R.drawable.thunderstorm
             18, 19, 22, 23, 94, 98 -> R.drawable.mixed_precip
+            51, 53, 55 -> R.drawable.rain_light
             else -> R.drawable.missing_data
         }
     }
