@@ -7,6 +7,7 @@ import android.R.id.bold
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -27,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
@@ -44,17 +46,25 @@ fun WelcomeScreen(navController: NavHostController) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val isDark = isSystemInDarkTheme()
+        val icon = if (isDark) R.drawable.weather_dark else R.drawable.weather_light
+
         Image(
-            painter = painterResource(id = R.drawable.weather_mix_24px),
+            painter = painterResource(id = icon),
             contentDescription = "Logo",
-            modifier = Modifier.size(200.dp)
+            modifier = Modifier.size(200.dp),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
         )
         Spacer(modifier = Modifier.height(56.dp))
         Text("Harjoitustyö", fontSize = 48.sp, style = MaterialTheme.typography.displayLarge)
         Text("Sääasema", fontSize = 32.sp, style = MaterialTheme.typography.displayMedium)
         Spacer(modifier = Modifier.height(32.dp))
-        IconButton(onClick = { navController.navigate("home") }, modifier = Modifier.size(96.dp) ) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Get Started", modifier = Modifier.size(96.dp))
+        IconButton(onClick = { navController.navigate("home") }, modifier = Modifier.size(96.dp)) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Get Started",
+                modifier = Modifier.size(96.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(256.dp))

@@ -3,6 +3,7 @@ package com.example.harjoitustyo.ui_weatherapp
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -31,7 +33,7 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding( 8.dp),
+            .padding(8.dp),
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally
 
@@ -64,8 +66,7 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                 val city = viewModel._cities[index]
 
                 Card(
-                    modifier = Modifier
-                        .padding(horizontal = 40.dp)
+                    modifier = Modifier.padding(horizontal = 40.dp)
                 ) {
                     Row(
                         modifier = Modifier
@@ -92,9 +93,13 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                                 containerColor = MaterialTheme.colorScheme.background
                             )
                         ) {
+                            val isDark = isSystemInDarkTheme()
+                            val icon = if (isDark) R.drawable.check_dark else R.drawable.check_light
+
                             Image(
-                                painter = painterResource(id = R.drawable.check_24px),
-                                contentDescription = "Select"
+                                painter = painterResource(id = icon),
+                                contentDescription = "Select",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
                             )
                         }
 
@@ -106,9 +111,15 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                                 containerColor = MaterialTheme.colorScheme.background
                             )
                         ) {
+                            val isDark = isSystemInDarkTheme()
+                            val icon =
+                                if (isDark) R.drawable.remove_dark else R.drawable.remove_light
+
+
                             Image(
-                                painter = painterResource(id = R.drawable.remove_24px),
+                                painter = painterResource(id = icon),
                                 contentDescription = "Remove",
+                                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
                             )
                         }
                     }
@@ -142,42 +153,45 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
                 TextField(
                     value = newCityName,
                     onValueChange = { newCityName = it },
-                    label = { Text("City Name", style = MaterialTheme.typography.bodyMedium) }
-                )
+                    label = { Text("City Name", style = MaterialTheme.typography.bodyMedium) })
                 TextField(
                     value = newLat,
                     onValueChange = { newLat = it },
-                    label = { Text("Latitude", style = MaterialTheme.typography.bodyMedium) }
-                )
+                    label = { Text("Latitude", style = MaterialTheme.typography.bodyMedium) })
                 TextField(
                     value = newLon,
                     onValueChange = { newLon = it },
-                    label = { Text("Longitude", style = MaterialTheme.typography.bodyMedium) }
-                )
+                    label = { Text("Longitude", style = MaterialTheme.typography.bodyMedium) })
 
-                Button(onClick = {
-                    val lat = newLat.toDoubleOrNull()
-                    val lon = newLon.toDoubleOrNull()
-                    if (lat != null && lon != null && newCityName.isNotBlank()) {
-                        val newCity = City(newCityName, lat, lon)
-                        viewModel.addCity(newCity)
-                        viewModel.selectCity(newCity)
-                        newCityName = ""
-                        newLat = ""
-                        newLon = ""
-                        navController.navigate("home") {
-                            popUpTo("home") { inclusive = true }
+                Button(
+                    onClick = {
+                        val lat = newLat.toDoubleOrNull()
+                        val lon = newLon.toDoubleOrNull()
+                        if (lat != null && lon != null && newCityName.isNotBlank()) {
+                            val newCity = City(newCityName, lat, lon)
+                            viewModel.addCity(newCity)
+                            viewModel.selectCity(newCity)
+                            newCityName = ""
+                            newLat = ""
+                            newLon = ""
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
                         }
-                    }
-                },
-                    colors = ButtonDefaults.buttonColors(
+                    }, colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.background
                     )
                 ) {
+                    val isDark = isSystemInDarkTheme()
+                    val icon = if (isDark) R.drawable.add_light else R.drawable.add_dark
+
                     Image(
-                        painter = painterResource(id = R.drawable.add_2_24px),
-                        contentDescription = "Remove",
+                        painter = painterResource(id = icon),
+                        contentDescription = "Add",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground)
                     )
+
                 }
             }
         }

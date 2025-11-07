@@ -1,6 +1,7 @@
 package com.example.harjoitustyo
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
@@ -163,6 +164,11 @@ class WeatherViewModel : ViewModel() {
                 _rain.value = fullRain
                 _times.value = displayTimes
 
+                Log.d("WeatherCodes", fullCodes.take(25).joinToString(", "))
+
+
+
+
                 // Käytä nykyisen tunnin iconia
                 // Käytä nykyisen tunnin iconia
                 val icon = getWeatherIcon(_weatherCodes.value.firstOrNull() ?: 0)
@@ -191,7 +197,7 @@ class WeatherViewModel : ViewModel() {
             in 25..39 -> R.drawable.fog
             in 80..84 -> R.drawable.thunderstorm
             18, 19, 22, 23, 94, 98 -> R.drawable.mixed_precip
-            51, 53, 55 -> R.drawable.rain_light
+            61, 51, 53, 55 -> R.drawable.rain_light
             else -> R.drawable.missing_data
         }
     }

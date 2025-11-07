@@ -1,28 +1,21 @@
 package com.example.harjoitustyo
 
-import com.example.harjoitustyo.ui_weatherapp.SearchScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -31,27 +24,32 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.harjoitustyo.ui.theme.AppTheme
-import com.example.harjoitustyo.ui_weatherapp.HomeScreen
-import com.example.harjoitustyo.ui_weatherapp.SettingsScreen
-import com.example.harjoitustyo.ui_weatherapp.WelcomeScreen
-import java.util.Locale
+import com.example.harjoitustyo.ui_weatherapp.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            AppTheme(
-                darkTheme = false
-            ) {
-                val viewModel: WeatherViewModel = viewModel()
-                MainScreen(viewModel)
+            var darkTheme by remember { mutableStateOf(false) }
+            val viewModel: WeatherViewModel = viewModel()
+
+            AppTheme(darkTheme = darkTheme) {
+                MainScreen(
+                    viewModel = viewModel,
+                    darkTheme = darkTheme,
+                    onToggleTheme = { darkTheme = !darkTheme }
+                )
             }
         }
     }
 }
 
 @Composable
-fun MainScreen(viewModel: WeatherViewModel) {
+fun MainScreen(
+    viewModel: WeatherViewModel,
+    darkTheme: Boolean,
+    onToggleTheme: () -> Unit
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -71,12 +69,15 @@ fun MainScreen(viewModel: WeatherViewModel) {
             composable("welcome") { WelcomeScreen(navController) }
             composable("home") { HomeScreen(viewModel) }
             composable("search") { SearchScreen(viewModel, navController) }
-            composable("settings") { SettingsScreen() }
+            composable("settings") {
+                SettingsScreen(
+                    darkTheme = darkTheme,
+                    onToggleTheme = onToggleTheme
+                )
+            }
         }
     }
 }
-
-
 
 @Composable
 fun BottomNavBar(navController: NavHostController) {
@@ -88,16 +89,19 @@ fun BottomNavBar(navController: NavHostController) {
 
     NavigationBar(
         modifier = Modifier
-            .height(72 .dp) // shrink height here
+            .height(72.dp)
             .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            .background(Color(0xFF2d2f38)),
-        containerColor = Color.Transparent
-
+            .background(MaterialTheme.colorScheme.onBackground)
     ) {
         items.forEach { item ->
             NavigationBarItem(
-                icon = { Icon(painterResource(id = item.iconRes), contentDescription = item.label) },
-                selected = false, // Highlight navbar selection, currently disabled
+                icon = {
+                    Icon(
+                        painterResource(id = item.iconRes),
+                        contentDescription = item.label
+                    )
+                },
+                selected = false,
                 onClick = { navController.navigate(item.route) }
             )
         }

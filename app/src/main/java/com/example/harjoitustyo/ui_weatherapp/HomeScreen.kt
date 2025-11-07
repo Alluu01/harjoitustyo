@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.harjoitustyo.WeatherViewModel
 import com.example.harjoitustyo.R
+import kotlinx.coroutines.delay
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -52,7 +53,11 @@ fun HomeScreen(viewModel: WeatherViewModel = viewModel()) {
 
             Spacer(modifier = Modifier.height(72.dp))
 
-            NumberListScreen(temps, times, rain) // hand off temperature, time and rain to NumberListScreen
+            NumberListScreen(
+                temps,
+                times,
+                rain
+            ) // hand off temperature, time and rain to NumberListScreen
         }
     }
 }
@@ -60,10 +65,22 @@ fun HomeScreen(viewModel: WeatherViewModel = viewModel()) {
 @Composable
 fun NumberListScreen(temps: List<Double>, times: List<String>, rain: List<Double>) {
 
+    var showError by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        delay(10_000)
+        showError = true
+    }
+
     if (temps.isEmpty() || times.isEmpty()) {
-        Text("Loading weather data...")
+        if (showError) {
+            Text("Network error")
+        } else {
+            Text("Loading weather data...")
+        }
         return
     }
+
 
     // Combine times, temps, and rain into a list of Triple
     val items =
