@@ -47,7 +47,6 @@ fun HomeScreen(viewModel: WeatherViewModel = viewModel()) {
                 modifier = Modifier.size(200.dp)
             )
 
-            // Display current temperature if available
             val currentTemp = temps.firstOrNull() ?: 0.0
             Text("${currentTemp.toInt()} °C", style = MaterialTheme.typography.displayLarge)
 
@@ -84,7 +83,6 @@ fun NumberListScreen(temps: List<Double>, times: List<String>, rain: List<Double
 
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        // Header row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
