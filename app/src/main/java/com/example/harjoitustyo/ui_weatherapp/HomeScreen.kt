@@ -54,10 +54,8 @@ fun HomeScreen(viewModel: WeatherViewModel = viewModel()) {
             Spacer(modifier = Modifier.height(72.dp))
 
             NumberListScreen(
-                temps,
-                times,
-                rain
-            ) // hand off temperature, time and rain to NumberListScreen
+                temps, times, rain
+            )
         }
     }
 }
@@ -68,7 +66,7 @@ fun NumberListScreen(temps: List<Double>, times: List<String>, rain: List<Double
     var showError by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        delay(10_000)
+        delay(5_000)
         showError = true
     }
 
@@ -81,8 +79,6 @@ fun NumberListScreen(temps: List<Double>, times: List<String>, rain: List<Double
         return
     }
 
-
-    // Combine times, temps, and rain into a list of Triple
     val items =
         times.zip(temps).zip(rain) { (time, temp), rainAmount -> Triple(time, temp, rainAmount) }
 

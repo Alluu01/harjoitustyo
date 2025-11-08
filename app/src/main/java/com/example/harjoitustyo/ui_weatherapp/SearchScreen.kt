@@ -55,10 +55,9 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
             Text("Remove", style = MaterialTheme.typography.bodyMedium)
         }
 
-        // 🏙️ Kaupunkilista (scrollaa nyt)
         LazyColumn(
             modifier = Modifier
-                .weight(1f)   // 🔑 ottaa kaiken jäljellä olevan tilan -> rajaa korkeuden
+                .weight(1f)
                 .align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -127,7 +126,7 @@ fun SearchScreen(viewModel: WeatherViewModel, navController: NavHostController) 
             }
         }
 
-        Spacer(modifier = Modifier.height(0.dp))
+        Spacer(modifier = Modifier.height(30.dp))
 
         Card(
             modifier = Modifier

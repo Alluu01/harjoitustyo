@@ -15,14 +15,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.harjoitustyo.data.CityDataStore
 import com.example.harjoitustyo.ui.theme.AppTheme
 import com.example.harjoitustyo.ui_weatherapp.*
 
@@ -31,24 +35,35 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             var darkTheme by remember { mutableStateOf(false) }
-            val viewModel: WeatherViewModel = viewModel()
+            val context = LocalContext.current
+            val cityDataStore = CityDataStore(context)
+            val viewModel: WeatherViewModel =
+                viewModel(factory = WeatherViewModelFactory(cityDataStore))
 
             AppTheme(darkTheme = darkTheme) {
                 MainScreen(
                     viewModel = viewModel,
                     darkTheme = darkTheme,
-                    onToggleTheme = { darkTheme = !darkTheme }
-                )
+                    onToggleTheme = { darkTheme = !darkTheme })
             }
         }
     }
 }
 
+@Suppress("UNCHECKED_CAST")
+class WeatherViewModelFactory(private val cityDataStore: CityDataStore) :
+    ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(WeatherViewModel::class.java)) {
+            return WeatherViewModel(cityDataStore) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
 @Composable
 fun MainScreen(
-    viewModel: WeatherViewModel,
-    darkTheme: Boolean,
-    onToggleTheme: () -> Unit
+    viewModel: WeatherViewModel, darkTheme: Boolean, onToggleTheme: () -> Unit
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -59,8 +74,7 @@ fun MainScreen(
             if (currentRoute != "welcome") {
                 BottomNavBar(navController)
             }
-        }
-    ) { innerPadding ->
+        }) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = "welcome",
@@ -71,8 +85,7 @@ fun MainScreen(
             composable("search") { SearchScreen(viewModel, navController) }
             composable("settings") {
                 SettingsScreen(
-                    darkTheme = darkTheme,
-                    onToggleTheme = onToggleTheme
+                    darkTheme = darkTheme, onToggleTheme = onToggleTheme
                 )
             }
         }
@@ -94,22 +107,15 @@ fun BottomNavBar(navController: NavHostController) {
             .background(MaterialTheme.colorScheme.onBackground)
     ) {
         items.forEach { item ->
-            NavigationBarItem(
-                icon = {
-                    Icon(
-                        painterResource(id = item.iconRes),
-                        contentDescription = item.label
-                    )
-                },
-                selected = false,
-                onClick = { navController.navigate(item.route) }
-            )
+            NavigationBarItem(icon = {
+                Icon(
+                    painterResource(id = item.iconRes), contentDescription = item.label
+                )
+            }, selected = false, onClick = { navController.navigate(item.route) })
         }
     }
 }
 
 data class BottomNavItem(
-    val route: String,
-    val iconRes: Int,
-    val label: String
+    val route: String, val iconRes: Int, val label: String
 )

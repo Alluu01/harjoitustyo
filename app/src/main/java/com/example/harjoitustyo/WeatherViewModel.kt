@@ -6,10 +6,9 @@ import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.harjoitustyo.data.CityDataStore
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -20,10 +19,9 @@ import java.time.format.DateTimeFormatter
 data class City(val name: String, val latitude: Double, val longitude: Double)
 
 @RequiresApi(Build.VERSION_CODES.O)
-class WeatherViewModel : ViewModel() {
+class WeatherViewModel(private val cityDataStore: CityDataStore) : ViewModel() {
 
-    // List of cities with coordinates
-    val _cities = mutableStateListOf<City>(
+    private val hardcodedCities = listOf(
         City("Tampere", 61.4991, 23.7871),
         City("Helsinki", 60.1695, 24.9354),
         City("Turku", 60.4518, 22.2666),
@@ -31,33 +29,39 @@ class WeatherViewModel : ViewModel() {
         City("Espoo", 60.2055, 24.6559)
     )
 
-    private val _selectedCity = MutableStateFlow<City>(_cities.first())
+    val _cities = mutableStateListOf<City>()
+
+    private val _selectedCity = MutableStateFlow<City>(hardcodedCities.first())
     val selectedCity: StateFlow<City> = _selectedCity.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            cityDataStore.citiesFlow.collect { savedCities ->
+                _cities.clear()
+                _cities.addAll(hardcodedCities)
+                _cities.addAll(savedCities.filterNot { city -> hardcodedCities.any { it.name == city.name } })
+            }
+        }
+    }
 
     fun updateSelectedCity(newCity: City) {
         _selectedCity.value = newCity
     }
 
-    // Temperatures for next 24 hours
     private val _temperatures = MutableStateFlow<List<Double>>(emptyList())
     val temperatures: StateFlow<List<Double>> = _temperatures
 
-    // Weather codes for next 24 hours
     private val _weatherCodes = MutableStateFlow<List<Int>>(emptyList())
     val weatherCodes: StateFlow<List<Int>> = _weatherCodes
 
-    // Retrieve times for next 24 hours
     private val _times = MutableStateFlow<List<String>>(emptyList())
     val times: StateFlow<List<String>> = _times
 
     private val _rain = MutableStateFlow<List<Double>>(emptyList())
     val rain: StateFlow<List<Double>> = _rain
 
-    // Current weather icon
     private val _currentIcon = MutableStateFlow(R.drawable.missing_data)
     val currentIcon: StateFlow<Int> = _currentIcon
-
 
     fun selectCity(city: City) {
         _selectedCity.value = city
@@ -66,24 +70,35 @@ class WeatherViewModel : ViewModel() {
     fun addCity(city: City) {
         if (!_cities.any { it.name.equals(city.name, true) }) {
             _cities.add(city)
+            saveUserAddedCities()
         }
     }
 
     fun removeCity(city: City) {
         _cities.remove(city)
+        if (!hardcodedCities.any { it.name == city.name }) {
+            saveUserAddedCities()
+        }
         if (_selectedCity.value == city && _cities.isNotEmpty()) {
             selectCity(_cities.first())
+        }
+    }
+
+    private fun saveUserAddedCities() {
+        viewModelScope.launch {
+            val userAddedCities =
+                _cities.filterNot { city -> hardcodedCities.any { it.name == city.name } }
+            cityDataStore.saveCities(userAddedCities)
         }
     }
 
     init {
         viewModelScope.launch {
             selectedCity.collect { city ->
-                city.let { fetchWeather(it) }
+                fetchWeather(city)
             }
         }
     }
-
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun fetchWeather(city: City) {
@@ -100,7 +115,6 @@ class WeatherViewModel : ViewModel() {
                 val timesJson = hourly.getJSONArray("time")
                 val rainJson = hourly.getJSONArray("rain")
 
-                // Listat kaikista tunneista (esim. 48h)
                 val temps = List(tempsJson.length()) { i -> tempsJson.getDouble(i) }
                 val codes = List(codesJson.length()) { i -> codesJson.getInt(i) }
                 val rainAmounts = List(rainJson.length()) { i -> rainJson.getDouble(i) }
@@ -112,17 +126,14 @@ class WeatherViewModel : ViewModel() {
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")
                 val now = LocalDateTime.now()
 
-                // Parsitaan ajat LocalDateTime-muotoon
                 val parsedTimes = List(timesJson.length()) { i ->
                     LocalDateTime.parse(timesJson.getString(i), formatter)
                 }
 
-                // Etsi ensimmäinen aika, joka on nyt tai tulevaisuudessa
                 val startIndex = parsedTimes.indexOfFirst { !it.isBefore(now) }.let {
                     if (it == 1) 0 else it
                 }
 
-                // Jos dataa ei ole tarpeeksi, täydennetään alusta
                 val availableHours = parsedTimes.size - startIndex
                 val remaining = totalHours - availableHours
 
@@ -154,11 +165,8 @@ class WeatherViewModel : ViewModel() {
                     )
                 }
 
-
-                // Muunna ajat näyttömuotoon (esim. "HH:mm")
                 val displayTimes = fullTimes.map { it.format(DateTimeFormatter.ofPattern("HH:mm")) }
 
-                // Aseta arvot
                 _temperatures.value = fullTemps
                 _weatherCodes.value = fullCodes
                 _rain.value = fullRain
@@ -166,23 +174,16 @@ class WeatherViewModel : ViewModel() {
 
                 Log.d("WeatherCodes", fullCodes.take(25).joinToString(", "))
 
-
-
-
-                // Käytä nykyisen tunnin iconia
-                // Käytä nykyisen tunnin iconia
                 val icon = getWeatherIcon(_weatherCodes.value.firstOrNull() ?: 0)
                 withContext(Dispatchers.Main) {
                     _currentIcon.value = icon
                 }
-
 
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
     }
-
 
     private fun getWeatherIcon(code: Int): Int {
         return when (code) {
@@ -202,4 +203,3 @@ class WeatherViewModel : ViewModel() {
         }
     }
 }
-

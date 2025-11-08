@@ -37,7 +37,6 @@ fun SettingsScreen(darkTheme: Boolean, onToggleTheme: () -> Unit) {
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title at top
             Text(
                 text = "Settings",
                 style = MaterialTheme.typography.displaySmall,
@@ -47,7 +46,6 @@ fun SettingsScreen(darkTheme: Boolean, onToggleTheme: () -> Unit) {
                     .padding(bottom = 32.dp)
             )
 
-            // Center card
             Card(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
