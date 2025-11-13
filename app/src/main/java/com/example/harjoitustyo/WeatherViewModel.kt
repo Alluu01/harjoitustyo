@@ -105,7 +105,7 @@ class WeatherViewModel(private val cityDataStore: CityDataStore) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val url =
-                    "https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&hourly=temperature_2m,weather_code,rain&timezone=Europe/Helsinki&forecast_days=2"
+                    "https://api.open-meteo.com/v1/forecast?latitude=${city.latitude}&longitude=${city.longitude}&hourly=temperature_2m,weather_code,rain&timezone=auto&forecast_days=2"
                 val data = URL(url).readText()
                 val json = JSONObject(data)
                 val hourly = json.getJSONObject("hourly")
